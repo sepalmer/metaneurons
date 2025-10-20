@@ -1,0 +1,10 @@
+venv
+*.dat
+data
+*.png
+*.svg
+*.pdf
+*.pyc
+*.pb
+*.DS_Store
+variables.*
