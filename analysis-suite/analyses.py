@@ -404,7 +404,275 @@ def linear_regress(x, Y, Y_err=None):
     return {k: cur_locals[k] for k in return_vars}
 
 
+def infonce_lower_bound(X, Y, critic_function, training=False):
+    """InfoNCE replica lower-bound (van den Oord et al. 2018)
+    for estimating I(X:Y).
+
+    Keyword arguments:
+    x -- full sample dataset for random variable X
+    y -- full sample dataset for random variable Y
+    f_ansatz (str) -- type of ansatz function
+
+    Author: Doruk Efe Gökmen
+    Date: 10/01/2021
+    """
+    scores = critic_function(X, Y, training=training)
+    num_samples = scores.shape[0]
+    positive_mask = tf.eye(num_samples, dtype=bool)
+
+    return (tfp.vi.mutual_information).lower_bound_info_nce(
+        logu=scores, joint_sample_mask=positive_mask
+    )
+
+
 def IB(X, Y, coarse_grainer, critic_function, **opt_params):
+    """
+    An implementation of IB-like coarse-graining based on the RSMI-NE project.
+
+    The convention for the critic_function inputs is critic_function(y, t) where t is coarse_grainer(x)
+
+    Arguments:
+    X (ndarray or Tensor) -- "Input" variable of IB (will be coarse-grained). Shape is (N, P) with interpretation (features, samples)
+    Y (ndarray or Tensor) -- "Relevance" variable of IB. Shape is (M, P) with interpretation (features, samples)
+    coarse_grainer (tensorflow Layer or Model) -- Coarse-graining map for X
+    critic_function (tensorflow Layer or Model) -- functional form describing log(P(y,t)) - log(P(y)P(t)).
+    """
+    N, M, P = validate_joint_input(X, Y)
+
+    opt_params_default = {
+        "batch_size": 800,  # was 800 for larger buffers
+        "iterations": 1,  # was 400 for above BKT, 25 for below BKT
+        "shuffle": 100000,
+        "learning_rate": 9e-3,  # was 4e-3
+        "quiet": False,  # turn off updates during training
+        "track_quantities": False,  # makes a pretty big difference in speed
+        "use_GPU": False,
+        "optimizer": None,  # options in tf.keras.optimizers. Default is Adam
+        # 'bound': 'infonce', # currently doesn't do anything, only infonce is available
+    }
+    opt_params_default.update(opt_params)
+    params = opt_params_default.copy()
+
+    # convert X and Y to tensorflow arrays. Make into tensorflow datasets.
+    X_tf = tf.cast(X.T, dtype=tf.as_dtype(X.dtype))
+    Y_tf = tf.cast(Y.T, dtype=tf.as_dtype(Y.dtype))
+    dat = tf.data.Dataset.from_tensor_slices((X_tf, Y_tf))
+    dat = (
+        dat.shuffle(params["shuffle"])
+        .batch(params["batch_size"])
+        .repeat(params["iterations"])
+    )
+
+    # bound = params['bound']
+    objective_function = infonce_lower_bound
+
+    # set optimizer
+    if params["optimizer"] == None:
+        # set optimiser as adam with given learning rate
+        # opt = tf.keras.optimizers.Adam(params["learning_rate"])
+        opt = tf.keras.optimizers.legacy.Adam(params["learning_rate"])
+    else:
+        opt = params["optimizer"]
+
+    @tf.function
+    def train_step(x, y):
+        """Single training step: performs gradient descent
+        on the coarse-graining network and vbmi net simultaneously.
+        Returns the most recent value of the RSMI estimate and the
+        corresponding set of coarse-grained random variables H.
+
+        Keyword arguments:
+        x, y -- samples for random variables E and V, respectively.
+        """
+
+        with tf.GradientTape() as tape:
+            h = coarse_grainer(x)
+
+            if params["use_GPU"]:
+                with tf.device("/GPU:" + str(0)):
+                    mi = objective_function(h, y, critic_function, training=True)
+            else:
+                mi = objective_function(h, y, critic_function, training=True)
+            loss = -mi
+
+            trainable_vars = []
+            # train VBMI critic and coarse-graining filters simulatenously
+            trainable_vars += coarse_grainer.trainable_variables
+            trainable_vars += critic_function.trainable_variables
+            grads = tape.gradient(loss, trainable_vars)
+            opt.apply_gradients(zip(grads, trainable_vars))
+        return mi, h
+
+    mi_during_training = []
+    coarse_grainer_weights = []
+    critic_weights = []
+    printing = not params["quiet"]
+    track_quantities = params["track_quantities"]
+    if printing:
+        pbar = tqdm(total=len(dat), desc="")
+
+    for V, E in dat:
+        mi, _ = train_step(V, E)
+        if track_quantities:
+            mi_during_training.append(mi.numpy())
+            coarse_grainer_weights.append(coarse_grainer.get_weights())
+            critic_weights.append(critic_function.get_weights())
+
+        if printing:
+            pbar.set_description(f"I={mi:.2f} nats")
+            pbar.update(1)  # update progress bar for each iteration step
+
+    if printing:
+        print("Training complete.")
+        pbar.close()
+
+    # return mi, filters, coarse_grainer, critic_function
+    # return mi, filters
+    if track_quantities:
+        return mi_during_training, coarse_grainer_weights, critic_weights
+
+
+def MI_NCE(X, Y, critic_function, shuffle=True, batch_size=100, N_batches=50, quiet=False):
+    """
+    Note that in RSMI X is supposed to be the coarse-grained representation H and Y is supposed to be the environment E
+    """
+
+    N, M, P = validate_joint_input(X, Y)
+
+    @tf.function
+    def single_batch_MI(H, E):
+        return infonce_lower_bound(H, E, critic_function)
+
+    N_repeats = max(int(N_batches * batch_size / (X.shape[1])), 1)
+    shuffle_size = 2 * (X.shape[1])
+
+    if batch_size == 0:
+        if not quiet:
+            print("batch size of zero")
+        return None
+
+    dat = tf.data.Dataset.from_tensor_slices((X.T, Y.T))
+    if shuffle:
+        dat = dat.repeat(N_repeats).shuffle(shuffle_size).batch(batch_size)
+    else:
+        dat = dat.batch(batch_size).repeat(N_repeats)
+
+    mi = []
+    total_iterations = len(dat)
+    if not quiet:
+        pbar = tqdm(total=total_iterations)
+
+    for V, E in dat:
+        mi.append(single_batch_MI(V, E))
+        if not quiet:
+            pbar.update(1)
+
+    mi_array = np.array(mi)
+    mi = sum(mi_array) / total_iterations
+
+    resample_fraction = batch_size / (
+        X.shape[1]
+    )  # number of repeats does not affect variance
+    # resample_fraction = 1
+    mi_stdev = np.sqrt(sum((mi_array - mi) ** 2) / total_iterations * resample_fraction)
+    if not quiet:
+        pbar.close()
+
+    output = {"mi": mi, "mi_stdev": mi_stdev, "mi_array": mi_array}
+    return output
+
+
+def train_NCE(X, Y, critic_function, **opt_params):
+    N, M, P = validate_joint_input(X, Y)
+
+    opt_params_default = {
+        "batch_size": 800,  # was 800 for larger buffers
+        "iterations": 1,  # was 400 for above BKT, 25 for below BKT
+        "shuffle": 100000,
+        "learning_rate": 9e-3,  # was 4e-3
+        "quiet": False,  # turn off updates during training
+        "track_quantities": False,  # makes a pretty big difference in speed
+        "use_GPU": False,
+        "optimizer": None,  # options in tf.keras.optimizers. Default is Adam
+        # 'bound': 'infonce', # currently doesn't do anything, only infonce is available
+    }
+    opt_params_default.update(opt_params)
+    params = opt_params_default.copy()
+
+    # convert X and Y to tensorflow arrays. Make into tensorflow datasets.
+    X_tf = tf.cast(X.T, dtype=tf.as_dtype(X.dtype))
+    Y_tf = tf.cast(Y.T, dtype=tf.as_dtype(Y.dtype))
+    dat = tf.data.Dataset.from_tensor_slices((X_tf, Y_tf))
+    dat = (
+        dat.shuffle(params["shuffle"])
+        .batch(params["batch_size"])
+        .repeat(params["iterations"])
+    )
+
+    # bound = params['bound']
+    objective_function = infonce_lower_bound
+
+    # set optimizer
+    if params["optimizer"] == None:
+        # set optimiser as adam with given learning rate
+        # opt = tf.keras.optimizers.Adam(params["learning_rate"])
+        opt = tf.keras.optimizers.legacy.Adam(params["learning_rate"])
+        
+    else:
+        opt = params["optimizer"]
+
+    @tf.function
+    def train_step(x, y):
+        """Single training step: performs gradient descent
+        on the coarse-graining network and vbmi net simultaneously.
+        Returns the most recent value of the RSMI estimate and the
+        corresponding set of coarse-grained random variables H.
+
+        Keyword arguments:
+        x, y -- samples for random variables E and V, respectively.
+        """
+
+        with tf.GradientTape() as tape:
+            if params["use_GPU"]:
+                with tf.device("/GPU:" + str(0)):
+                    mi = objective_function(x, y, critic_function, training=True)
+            else:
+                mi = objective_function(x, y, critic_function, training=True)
+            loss = -mi
+
+            trainable_vars = []
+            # train VBMI critic and coarse-graining filters simulatenously
+            trainable_vars += critic_function.trainable_variables
+            grads = tape.gradient(loss, trainable_vars)
+            opt.apply_gradients(zip(grads, trainable_vars))
+        return mi
+
+    mi_during_training = []
+    critic_weights = []
+    printing = not params["quiet"]
+    track_quantities = params["track_quantities"]
+    if printing:
+        pbar = tqdm(total=len(dat), desc="")
+
+    for V, E in dat:
+        mi = train_step(V, E)
+        if track_quantities:
+            mi_during_training.append(mi.numpy())
+            critic_weights.append(critic_function.get_weights())
+
+        if printing:
+            pbar.set_description(f"I={mi:.2f} nats")
+            pbar.update(1)  # update progress bar for each iteration step
+
+    if printing:
+        print("Training complete.")
+        pbar.close()
+
+    if track_quantities:
+        return mi_during_training, critic_weights
+
+
+def IB_swap_xy(X, Y, coarse_grainer, critic_function, **opt_params):
     """
     An implementation of IB-like coarse-graining based on the RSMI-NE project.
 
@@ -518,8 +786,7 @@ def IB(X, Y, coarse_grainer, critic_function, **opt_params):
     if track_quantities:
         return mi_during_training, coarse_grainer_weights, critic_weights
 
-
-def MI_NCE(
+def MI_NCE_swap_xy(
     X, Y, critic_function, shuffle=True, batch_size=100, N_batches=50, quiet=False
 ):
     """
@@ -529,7 +796,7 @@ def MI_NCE(
     N, M, P = validate_joint_input(X, Y)
 
     @tf.function
-    def single_batch_MI(E, H):
+    def single_batch_MI(H, E):
         return infonce_lower_bound(E, H, critic_function)
 
     N_repeats = max(int(N_batches * batch_size / (X.shape[1])), 1)
@@ -552,7 +819,7 @@ def MI_NCE(
         pbar = tqdm(total=total_iterations)
 
     for V, E in dat:
-        mi.append(single_batch_MI(E, V))
+        mi.append(single_batch_MI(V, E))
         if not quiet:
             pbar.update(1)
 
@@ -571,7 +838,7 @@ def MI_NCE(
     return output
 
 
-def train_NCE(X, Y, critic_function, **opt_params):
+def train_NCE_swap_xy(X, Y, critic_function, **opt_params):
     N, M, P = validate_joint_input(X, Y)
 
     opt_params_default = {
@@ -659,62 +926,3 @@ def train_NCE(X, Y, critic_function, **opt_params):
 
     if track_quantities:
         return mi_during_training, critic_weights
-
-
-def infonce_lower_bound(X, Y, critic_function, training=False):
-    """InfoNCE replica lower-bound (van den Oord et al. 2018)
-    for estimating I(X:Y).
-
-    Keyword arguments:
-    x -- full sample dataset for random variable X
-    y -- full sample dataset for random variable Y
-    f_ansatz (str) -- type of ansatz function
-
-    Author: Doruk Efe Gökmen
-    Date: 10/01/2021
-    """
-    scores = critic_function(X, Y, training=training)
-    num_samples = scores.shape[0]
-    positive_mask = tf.eye(num_samples, dtype=bool)
-
-    return (tfp.vi.mutual_information).lower_bound_info_nce(
-        logu=scores, joint_sample_mask=positive_mask
-    )
-
-
-def IB_test_train(X, Y, frac=0.5):
-    N, M, P = validate_joint_input(X, Y)
-    pass
-
-
-# def MI_NCE(X, Y, f_ansatz, shuffle=True, batch_size=1000, N_repeats=100):
-#     '''Note that in RSMI X is supposed to be the coarse-grained representation H and Y is supposed to be the environment E'''
-
-#     @tf.function
-#     def single_batch_MI(E, V):
-#         return lowerbounds['infonce'](E, V, f_ansatz)
-
-#     shuffle_size = 100000
-#     dat = tf.data.Dataset.from_tensor_slices((X.T, Y.T))
-#     if shuffle:
-#         dat = dat.repeat(N_repeats).shuffle(shuffle_size).batch(batch_size)
-#     else:
-#         dat = dat.batch(batch_size).repeat(N_repeats)
-
-#     mi = []
-#     total_iterations = np.size([1 for a in dat])
-#     pbar = tqdm(total=total_iterations)
-#     for V, E in dat:
-#         mi.append(single_batch_MI(E, V))
-#         pbar.update(1)
-#     mi_array = np.array(mi)
-#     mi = sum(mi_array) / total_iterations
-#     mi_stdev = np.sqrt(sum((mi_array - mi)**2)/total_iterations)
-#     pbar.close()
-
-#     output = {'mi':mi,
-#         'mi_stdev':mi_stdev,
-#         'mi_array':mi_array
-#         }
-
-#     return output

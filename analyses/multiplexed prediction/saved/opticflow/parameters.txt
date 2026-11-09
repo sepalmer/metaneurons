@@ -1,0 +1,98 @@
+# Parameters used to generate each data file in this directory, one [file name] section per file.
+# Written by tools.record_parameters; results (e.g. float arrays) are omitted.
+
+[longer training (1,B,1) K=1.dat]
+# recorded 2026-10-21 02:09 UTC
+# notebook: analyses/multiplexed prediction/(1,B,1) K=1.ipynb
+E_width = 1
+N_meta_neurons = 1
+N_training_repeats = 10
+V_E_buffer_array = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
+V_width = 1
+critic_params = {'hidden_dim': 32, 'embed_dim': 8, 'layers': 2, 'activation': 'tanh'}
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+reference_times = [0, 4, 8, 12, 16, 20]
+samp_keep = 1
+shuffle_time = False
+shuffle_type = None
+stim = 'opticflow'
+train_fraction = 0.5
+train_opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 5}
+
+[longer training (1,B,1) K=2.dat]
+# recorded 2026-10-21 03:45 UTC
+# notebook: analyses/multiplexed prediction/(1,B,1) K=2.ipynb
+E_width = 1
+N_meta_neurons = 2
+N_training_repeats = 10
+V_E_buffer_array = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
+V_width = 1
+critic_params = {'hidden_dim': 32, 'embed_dim': 8, 'layers': 2, 'activation': 'tanh'}
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+reference_times = [0, 4, 8, 12, 16, 20]
+samp_keep = 1
+shuffle_time = False
+shuffle_type = None
+stim = 'opticflow'
+train_fraction = 0.5
+train_opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 5}
+
+[longer training (1,B,1) K=4.dat]
+# recorded 2026-10-21 15:51 UTC
+# notebook: analyses/multiplexed prediction/(1,B,1) K=4.ipynb
+E_width = 1
+N_meta_neurons = 4
+N_training_repeats = 10
+V_E_buffer_array = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
+V_width = 1
+critic_params = {'hidden_dim': 32, 'embed_dim': 8, 'layers': 2, 'activation': 'tanh'}
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+reference_times = [0, 4, 8, 12, 16, 20]
+samp_keep = 1
+shuffle_time = False
+shuffle_type = None
+stim = 'opticflow'
+train_fraction = 0.5
+train_opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 5}
+
+[longer training (1,B,1) K=8.dat]
+# recorded 2026-10-21 16:37 UTC
+# notebook: analyses/multiplexed prediction/(1,B,1) K=8.ipynb
+E_width = 1
+N_meta_neurons = 8
+N_training_repeats = 10
+V_E_buffer_array = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
+V_width = 1
+critic_params = {'hidden_dim': 32, 'embed_dim': 8, 'layers': 2, 'activation': 'tanh'}
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+reference_times = [0, 4, 8, 12, 16, 20]
+samp_keep = 1
+shuffle_time = False
+shuffle_type = None
+stim = 'opticflow'
+train_fraction = 0.5
+train_opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 5}
+
+[longer training bound.dat]
+# recorded 2026-10-20 21:52 UTC
+# notebook: analyses/multiplexed prediction/longer training bound.ipynb
+E_width = 1
+K = 20
+N_training_repeats = 10
+V_E_buffer_array = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
+V_width = 1
+coarse_grainer_type = models.PolynomialLayer
+critic_params = {'hidden_dim': 32, 'embed_dim': 8, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+mov_ind = 4
+mov_name = 'opticflow'
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+samp_keep = 1
+shuffle_time = False
+train_fraction = 0.5
+train_opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 5}

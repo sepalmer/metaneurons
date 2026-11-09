@@ -1,0 +1,16 @@
+# Parameters used to generate each data file in this directory, one [file name] section per file.
+# Written by tools.record_parameters; results (e.g. float arrays) are omitted.
+
+[autocorrelations only (1, 0, 1), layers 6 new.dat]
+# recovered from file contents on 2026-10-19
+# notebook: unknown
+E_width = 1
+N_trials = 10
+V_E_buffer = 0
+V_width = 1
+critic_config = {'N_features': 93, 'layers': 6, 'activation': 'tanh'}
+critic_params = {'N_features': 93, 'layers': 6, 'activation': 'tanh'}
+critic_params_ctl = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = __main__.AutocorrelationOnlyCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}

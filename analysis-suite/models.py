@@ -395,8 +395,8 @@ class SeparableCustomCritic(tf.keras.Model):
     def call(self, x, y):
         return tf.keras.layers.add(
             [
-                tf.einsum("ij,kj->ik", self._h[i](y), self._g[i](x))
-                for i in range(self.embed_dim)
+                tf.einsum("ij,kj->ik", self._g[a](x), self._h[a](y))
+                for a in range(self.embed_dim)
             ]
         )
 
@@ -414,7 +414,7 @@ class SeparablePolynomialCritic(tf.keras.Model):
 
     @tf.function
     def call(self, x, y):
-        return tf.einsum("ij,kj->ik", self._h(y), self._g(x))
+        return tf.einsum("ij,kj->ik", self._g(x), self._h(y))
 
 
 # @tf.keras.saving.register_keras_serializable()
@@ -456,4 +456,4 @@ class SeparableCritic(tf.keras.Model):
         y -- a sample for the random variable Y
         """
 
-        return tf.einsum("ij,kj->ik", self._h(y), self._g(x))
+        return tf.einsum("ij,kj->ik", self._g(x), self._h(y))

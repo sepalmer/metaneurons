@@ -1,0 +1,48 @@
+# Parameters used to generate each data file in this directory, one [file name] section per file.
+# Written by tools.record_parameters; results (e.g. float arrays) are omitted.
+
+[Gaussian information (1, 0, 1).dat]
+# recovered from file contents on 2026-10-19
+# notebook: unknown
+E_width = 1
+V_E_buffer = 0
+V_width = 1
+alp = 0.0199526231496888
+samp_keep = 1
+train_fraction = 0.8
+
+[Gaussian information (10, 0, 1).dat]
+# recovered from file contents on 2026-10-19
+# notebook: unknown
+E_width = 1
+V_E_buffer = 0
+V_width = 10
+alp = 1e-07
+samp_keep = 1
+train_fraction = 1
+
+[Gaussian information (7, 0, 1).dat]
+# recovered from file contents on 2026-10-19
+# notebook: unknown
+E_width = 1
+V_E_buffer = 0
+V_width = 7
+alp = 1e-07
+samp_keep = 1
+train_fraction = 1
+
+[linear critic (1, 0, 1).dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/architecture tests/linear critic.ipynb (inferred)
+E_width = 1
+N_training_repeats = 5
+V_E_buffer = 0
+V_width = 1
+cg_params = {'order': 1, 'output_dim': 20}
+coarse_grainer_type = models.PolynomialLayer
+critic_params = {'hidden_dim': 32, 'embed_dim': 93, 'layers': 0, 'activation': None}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 5}
+samp_keep = 1
+train_fraction = 0.5

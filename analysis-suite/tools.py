@@ -1,5 +1,8 @@
+import os
+import re
 import numpy as np
 import math
+from datetime import datetime, timezone
 from random import sample
 from scipy.spatial import distance_matrix
 import matplotlib as mpl
@@ -273,3 +276,116 @@ def partition_(number):
         for y in partition_(number - x):
             answer.add(tuple(sorted((x,) + y)))
     return answer
+
+
+PARAMETER_FILE_NAME = "parameters.txt"
+PARAMETER_FILE_HEADER = [
+    "# Parameters used to generate each data file in this directory, one [file name] section per file.",
+    "# Written by tools.record_parameters; results (e.g. float arrays) are omitted.",
+]
+
+
+def is_parameter(value, max_length=100):
+    """decide whether a saved value is an experiment parameter rather than a result
+
+    Scalars, strings, types and dicts of these count as parameters, as do ranges and lists,
+    tuples or 1d arrays of at most `max_length` ints, bools or strings. Float sequences, longer
+    sequences (e.g. train/test indices) and other arrays are treated as results.
+    """
+    if value is None or isinstance(value, (bool, int, float, str, type, range, np.generic)):
+        return True
+    if isinstance(value, dict):
+        return all(is_parameter(v, max_length) for v in value.values())
+    if isinstance(value, (list, tuple)):
+        return len(value) <= max_length and all(
+            isinstance(v, (bool, int, str, np.integer, np.bool_)) for v in value
+        )
+    if isinstance(value, np.ndarray):
+        return value.ndim <= 1 and value.size <= max_length and value.dtype.kind in "biuU"
+    return False
+
+
+def format_parameter(value):
+    """write a parameter value as a single readable line"""
+    if isinstance(value, type):
+        return f"{value.__module__}.{value.__qualname__}"
+    if isinstance(value, np.ndarray):
+        return repr(value.tolist())
+    if isinstance(value, np.generic):
+        return repr(value.item())
+    if isinstance(value, dict):
+        return "{" + ", ".join(f"{k!r}: {format_parameter(v)}" for k, v in value.items()) + "}"
+    if isinstance(value, (list, tuple)):
+        items = [format_parameter(v) for v in value]
+        if isinstance(value, tuple):
+            return "(" + ", ".join(items) + ("," if len(items) == 1 else "") + ")"
+        return "[" + ", ".join(items) + "]"
+    return repr(value)
+
+
+def read_parameter_sections(parameter_path):
+    """read a parameters.txt file into a dict mapping data file name to its lines"""
+    sections = {}
+    if not os.path.exists(parameter_path):
+        return sections
+    current = None
+    with open(parameter_path, "r") as f:
+        for line in f.read().splitlines():
+            header = re.fullmatch(r"\[(.+)\]", line)
+            if header:
+                current = header.group(1)
+                sections[current] = []
+            elif current is not None and line.strip():
+                sections[current].append(line)
+    return sections
+
+
+def current_notebook():
+    """path of the running notebook relative to the project folder, or None outside a notebook
+
+    VS Code sets `__vsc_ipynb_file__` to the absolute path. Jupyter sets `__session__` relative
+    to the server root, so a relative path is resolved against the kernel's working directory,
+    which is the notebook's own directory by default.
+    """
+    try:
+        from IPython import get_ipython
+    except ImportError:
+        return None
+    shell = get_ipython()
+    if shell is None:
+        return None
+    path = shell.user_ns.get("__vsc_ipynb_file__") or shell.user_ns.get("__session__")
+    if not path:
+        return None
+    if not os.path.isabs(path):
+        path = os.path.join(os.getcwd(), os.path.basename(path))
+    project_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.relpath(path, project_folder)
+
+
+def record_parameters(data_path, params, comment=None, notebook=None):
+    """record the parameters used to generate the file at `data_path`
+
+    Entries are kept in parameters.txt in the same directory as `data_path`, one section per
+    data file; an existing section for the same file is replaced. `params` may be the full
+    `output_data` dict, since only values passing `is_parameter` are written. The generating
+    notebook is detected automatically unless `notebook` is given.
+    """
+    directory, file_name = os.path.split(os.path.abspath(data_path))
+    parameter_path = os.path.join(directory, PARAMETER_FILE_NAME)
+    if comment is None:
+        comment = "recorded " + datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    if notebook is None:
+        notebook = current_notebook()
+
+    sections = read_parameter_sections(parameter_path)
+    sections[file_name] = [f"# {comment}"] + ([f"# notebook: {notebook}"] if notebook else []) + [
+        f"{k} = {format_parameter(params[k])}" for k in sorted(params) if is_parameter(params[k])
+    ]
+
+    lines = list(PARAMETER_FILE_HEADER)
+    for name in sorted(sections):
+        lines += ["", f"[{name}]"] + sections[name]
+    os.makedirs(directory, exist_ok=True)
+    with open(parameter_path, "w") as f:
+        f.write("\n".join(lines) + "\n")

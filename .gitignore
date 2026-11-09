@@ -1,4 +1,5 @@
 venv
+venv_old
 *.dat
 data
 *.png
@@ -7,4 +8,7 @@ data
 *.pyc
 *.pb
 *.DS_Store
+*.pkl
 variables.*
+*.mat
+*.tex

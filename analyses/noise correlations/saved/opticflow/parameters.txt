@@ -1,0 +1,156 @@
+# Parameters used to generate each data file in this directory, one [file name] section per file.
+# Written by tools.record_parameters; results (e.g. float arrays) are omitted.
+
+[(shuffled trial per time) 0 - 22.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/dependence on timescale.ipynb (inferred)
+E_width = 1
+N_training_repeats = 20
+V_E_buffer_array = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+V_width = 1
+coarse_grainer_type = models.PolynomialLayer
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+mov_ind = 4
+mov_name = 'opticflow'
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 16}
+samp_keep = 1
+shuffle_time = False
+train_fraction = 0.5
+
+[0 - 22.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/dependence on timescale.ipynb (inferred)
+E_width = 1
+N_training_repeats = 20
+V_E_buffer_array = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+V_width = 1
+coarse_grainer_type = models.PolynomialLayer
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+mov_ind = 4
+mov_name = 'opticflow'
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 16}
+samp_keep = 1
+shuffle_time = False
+train_fraction = 0.5
+
+[trial shuffle comparisons (1, 0, 1) N=32.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_neurons = 32
+N_trials = 10
+V_E_buffer = 0
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 16}
+trial_keys = ['control', 'time', 'cell', 'both']
+
+[trial shuffle comparisons (1, 0, 1) N=40.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_neurons = 40
+N_trials = 10
+V_E_buffer = 0
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+trial_keys = ['control', 'time', 'cell', 'both']
+
+[trial shuffle comparisons (1, 0, 1) N=93 high-iter.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_trials = 10
+V_E_buffer = 0
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 16}
+trial_keys = ['control', 'time', 'cell', 'both']
+
+[trial shuffle comparisons (1, 0, 1) N=93.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_trials = 10
+V_E_buffer = 0
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+trial_keys = ['control', 'time', 'cell', 'both']
+
+[trial shuffle comparisons (1, 11, 1) N=40.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_neurons = 40
+N_trials = 20
+V_E_buffer = 11
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+trial_keys = ['control', 'time', 'cell']
+
+[trial shuffle comparisons (1, 5, 1) N=40.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_neurons = 40
+N_trials = 20
+V_E_buffer = 5
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+trial_keys = ['control', 'time', 'cell']
+
+[trial shuffle comparisons (1, 5, 1) N=93 high-iter.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_neurons = 93
+N_trials = 20
+V_E_buffer = 5
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 16}
+trial_keys = ['control', 'time', 'cell']
+
+[trial shuffle comparisons (1, 5, 1) N=93.dat]
+# recovered from file contents on 2026-10-19
+# notebook: analyses/noise correlations/trial shuffle comparisons.ipynb (inferred)
+E_width = 1
+N_neurons = 93
+N_trials = 20
+V_E_buffer = 5
+V_width = 1
+critic_config = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_params = {'hidden_dim': 32, 'embed_dim': 30, 'layers': 2, 'activation': 'tanh'}
+critic_type = models.SeparableCritic
+mi_measurement_params = {'quiet': True, 'batch_size': 500, 'N_batches': 500}
+opt_params = {'track_quantities': False, 'quiet': True, 'iterations': 1}
+trial_keys = ['control', 'time', 'cell', 'both']
