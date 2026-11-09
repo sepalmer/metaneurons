@@ -399,7 +399,10 @@ def linear_regress(x, Y, Y_err=None):
     # fit = np.polynomial.polynomial.Polynomial(params)
     fit_err = np.polynomial.polynomial.Polynomial(np.array([intercept_err, slope_err]))
 
-    return_vars = ["fit", "fit_err", "intercept", "slope", "intercept_err", "slope_err"]
+    # Get coefficient of determination
+    R_squared = 1 - np.sum(residuals**2) / np.sum((Y_flat - np.mean(Y_flat))**2)
+
+    return_vars = ["fit", "fit_err", "intercept", "slope", "intercept_err", "slope_err", "R_squared"]
     cur_locals = locals()
     return {k: cur_locals[k] for k in return_vars}
 

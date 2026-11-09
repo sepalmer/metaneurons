@@ -12,3 +12,5 @@ data
 variables.*
 *.mat
 *.tex
+hidden
+parameters.txt
